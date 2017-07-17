@@ -7,16 +7,21 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
  * Created by wenyou on 2017/7/17.
  */
-public class StreamCreate {
+public class StreamFeature {
     @Test
     public void create() {
         // of
@@ -78,13 +83,16 @@ public class StreamCreate {
 
     @Test
     public void status() {
+        // 去重
         Stream.of("a", "b", "c", "c", "b").distinct().forEach(s -> System.out.println(s));
 
+        // 排序
         Stream.of("a", "abc", "ab").sorted(Comparator.comparing(String::length).reversed()).forEach(s -> System.out.println(s));
     }
 
     @Test
     public void ju() {
+        // 判断
         Optional<String> stringOptional = Stream.of("a", "abc", "ab").max(String::compareToIgnoreCase);
         if (stringOptional.isPresent()) {
             System.out.println(stringOptional.get());
@@ -103,5 +111,53 @@ public class StreamCreate {
 
         boolean b = Stream.of("abc", "abd", "def").anyMatch(s -> s.startsWith("b"));
         System.out.println(b);
+    }
+
+    @Test
+    public void optional() {
+        // 条件
+        new LinkedList<String>().stream().findFirst().ifPresent(s -> System.out.println(s));
+
+        System.out.println(new LinkedList<String>().stream().findFirst().orElse("default"));
+
+        // function
+        System.out.println(new LinkedList<String>().stream().findFirst().orElseGet(() -> new String("default")));
+
+        // exception
+        try {
+            System.out.println(new LinkedList<String>().stream().findFirst().orElseThrow(NoSuchElementException::new));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    @Test
+    public void reduce() {
+        Stream.of("a", "b", "c").reduce((x, y) -> x + y).ifPresent(s -> System.out.println(s));
+
+        // 初始值
+        System.out.println(Stream.of("a", "b", "c").reduce("result: ", (x, y) -> x + y));
+
+        // 并行
+        System.out.println(Stream.iterate(Long.valueOf(0), l -> ++l).limit(10000).reduce(0L, (x, y) -> x + y, (i, j) -> i + j));
+
+        HashSet<String> set1 = Stream.iterate(Integer.valueOf(0), i -> ++i).limit(5).map(i -> "value:" + i.toString()).collect(HashSet::new, HashSet::add, HashSet::addAll);
+        System.out.println(set1.size());
+        Set<String> set2 = Stream.iterate(Integer.valueOf(0), i -> ++i).limit(5).map(i -> "value:" + i.toString()).collect(Collectors.toSet());
+        System.out.println(set2.size());
+    }
+
+    @Test
+    public void intStream() {
+        // 开区间
+        System.out.println(IntStream.range(0, 3).count());
+        // 闭区间
+        System.out.println(IntStream.rangeClosed(0, 3).count());
+
+        // 基础类型转换
+        IntStream is = Stream.of("a", "ab", "abc").mapToInt(String::length);
+        is.forEach(i -> System.out.println(i));
+        Stream<Integer> si = IntStream.range(0, 3).boxed();
+        si.forEach(i -> System.out.println(i));
     }
 }
